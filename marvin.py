@@ -103,8 +103,8 @@ def watch_comments():
     # sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
     sub = "bottest"
     for comment in r.subreddit(sub).stream.comments():
-	sleep(1)
 	job_satisfaction()
+	shame()
 	links = get_links(comment.body)
 	if len(links) > 0 and comment.created_utc > (time() - 60) and not already_replied(comment):
 	    comment.refresh()
@@ -125,6 +125,10 @@ def watch_comments():
 		print 'respond error:'
 		print e
 
+def shame():
+    for comment in r.user.me().comments(limit=10):
+	if c.score <= -3:
+	    comment.delete()
 
 def already_replied(comment):
     query_string = "select * from comments where Id = '"+str(comment)+"'"
