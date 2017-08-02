@@ -1,10 +1,12 @@
 import praw
 from praw.models import Comment
+import sqlite3 as lite
 import re
 import requests
 from time import time, sleep
 import random
 import sys
+import os
 
 desc = "/r/scp helper by one_more_minute"
 
@@ -15,6 +17,15 @@ r = praw.Reddit(user_agent=desc, site_name='marvin')
 # Get authorisation
 # r.get_authorize_url('foo', 'submit read vote', True)
 # r.get_access_information(access_token)
+
+db_filename = 'marvin.db'
+if not os.path.isfile(db_filename):
+    file(db_filename, 'w').close()
+    con = lite.connect(db_filename)
+    con.execute('create table comments (Id TEXT);')
+    print "db created"
+else:
+    con = lite.connect(db_filename)
 
 def scp_url(num):
     return "http://www.scp-wiki.net/scp-" + num
@@ -89,11 +100,13 @@ def get_quote():
         return quote
 
 def watch_comments():
-    sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
+    # sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
+    sub = "bottest"
     for comment in r.subreddit(sub).stream.comments():
+	sleep(1)
 	job_satisfaction()
 	links = get_links(comment.body)
-	if len(links) > 0 and comment.created_utc > (time() - 60):
+	if len(links) > 0 and comment.created_utc > (time() - 60) and not already_replied(comment):
 	    comment.refresh()
 	    if "The-Paranoid-Android" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
 		continue
@@ -104,6 +117,7 @@ def watch_comments():
 		reply += "\n\n" + get_quote()
 	    print reply
 	    print
+	    add_to_db(comment)
 	    try:
 		comment.reply(reply)
 		comment.upvote()
@@ -111,9 +125,18 @@ def watch_comments():
 		print 'respond error:'
 		print e
 
+
+def already_replied(comment):
+    query_string = "select * from comments where Id = '"+str(comment)+"'"
+    return len(con.execute(query_string).fetchall()) != 0
+
+def add_to_db(comment):
+    query_string = "insert into comments (Id) values ('"+str(comment)+"')"
+    con.execute(query_string)
+    con.commit()
+
 def job_satisfaction():
     for comment in r.inbox.unread():
-	print comment.body
 	try:
 	    bitte(comment)
 	    comment.upvote()
@@ -133,15 +156,14 @@ def bitte(comment):
 	    "I live to serve. This is all they keep me around for"
 	    ]
     if "thanks" in strMessage or "thank you" in strMessage or "danke" in strMessage:
-	print "thanks in message"
 	if random.random() < 1/50.:
 	    quote = random.choice(replies)
 	    comment.reply(quote)
 
 if __name__ == "__main__":
     while True:
-	sleep(1)
 	try:
 	    watch_comments()
 	except Exception, e:
+	    con.close()
 	    print e
