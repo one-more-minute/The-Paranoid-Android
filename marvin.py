@@ -126,9 +126,12 @@ def watch_comments():
 		print e
 
 def shame():
-    for comment in r.user.me().comments(limit=10):
-	if c.score <= -3:
-	    comment.delete()
+    print round(time())
+    if round(time()) % 90 == 0:
+	print "shaming"
+	for comment in r.user.me().comments.new(limit=100):
+	    if comment.score <= -2:
+		comment.delete()
 
 def already_replied(comment):
     query_string = "select * from comments where Id = '"+str(comment)+"'"
