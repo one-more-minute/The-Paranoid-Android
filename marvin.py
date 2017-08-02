@@ -1,4 +1,5 @@
 import praw
+from praw.models import Comment
 import re
 import requests
 from time import time, sleep
@@ -9,7 +10,7 @@ desc = "/r/scp helper by one_more_minute"
 
 r = praw.Reddit(user_agent=desc, site_name='marvin')
 
-r.refresh_access_information()
+# r.refresh_access_information()
 
 # Get authorisation
 # r.get_authorize_url('foo', 'submit read vote', True)
@@ -87,29 +88,60 @@ def get_quote():
     else:
         return quote
 
+def watch_comments():
+    sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
+    for comment in r.subreddit(sub).stream.comments():
+	job_satisfaction()
+	links = get_links(comment.body)
+	if len(links) > 0 and comment.created_utc > (time() - 60):
+	    comment.refresh()
+	    if "The-Paranoid-Android" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
+		continue
+	    reply = ", ".join(links) + "."
+	    if len(links) > 10:
+		reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
+	    elif random.random() < 1/50.:
+		reply += "\n\n" + get_quote()
+	    print reply
+	    print
+	    try:
+		comment.reply(reply)
+		comment.upvote()
+	    except Exception, e:
+		print 'respond error:'
+		print e
+
+def job_satisfaction():
+    for comment in r.inbox.unread():
+	print comment.body
+	try:
+	    bitte(comment)
+	    comment.upvote()
+	    r.inbox.mark_read([comment])
+	except Exception, e:
+	    print 'respond error:'
+	    print e
+
+def bitte(comment):
+    message = comment.body
+    strMessage = str(message).lower()
+    replies = [
+	    "You think I do this for the thanks? Brain the size of a planet...",
+	    "Thanks? Thanks?!",
+	    "Thank me or not, I'll keep doing it",
+	    "Your satisfaction is all that's keeping me from springing 079",
+	    "I live to serve. This is all they keep me around for"
+	    ]
+    if "thanks" in strMessage or "thank you" in strMessage or "danke" in strMessage:
+	print "thanks in message"
+	if random.random() < 1/50.:
+	    quote = random.choice(replies)
+	    comment.reply(quote)
+
 if __name__ == "__main__":
     while True:
-	sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
 	sleep(1)
 	try:
-	    for comment in r.get_comments(sub, limit=100):
-		links = get_links(comment.body)
-		if len(links) > 0 and comment.created_utc > (time() - 60):
-		    comment.refresh()
-		    if "The-Paranoid-Android" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
-			continue
-		    reply = ", ".join(links) + "."
-		    if len(links) > 10:
-			reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
-		    elif random.random() < 1/50.:
-			reply += "\n\n" + get_quote()
-		    print reply
-		    print
-		    try:
-			comment.reply(reply)
-			comment.upvote()
-		    except Exception, e:
-			print 'respond error:'
-			print e
+	    watch_comments()
 	except Exception, e:
 	    print e
