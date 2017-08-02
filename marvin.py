@@ -100,8 +100,7 @@ def get_quote():
         return quote
 
 def watch_comments():
-    # sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
-    sub = "bottest"
+    sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682', 'dankmemesfromsite19'])
     for comment in r.subreddit(sub).stream.comments():
 	job_satisfaction()
 	shame()
