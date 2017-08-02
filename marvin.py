@@ -133,13 +133,18 @@ def shame():
 		comment.delete()
 
 def already_replied(comment):
-    query_string = "select * from comments where Id = '"+str(comment)+"'"
-    return len(con.execute(query_string).fetchall()) != 0
+    con = lite.connect(db_filename)
+    query_string = "select * from comments where Id = ?"
+    ret = con.execute(query_string, (comment,)).fetchone() != None
+    con.close()
+    return ret
 
 def add_to_db(comment):
-    query_string = "insert into comments (Id) values ('"+str(comment)+"')"
-    con.execute(query_string)
+    con = lite.connect(db_filename)
+    query_string = "insert into comments (Id) values (?)"
+    con.execute(query_string, (comment,))
     con.commit()
+    con.close()
 
 def job_satisfaction():
     for comment in r.inbox.unread():
