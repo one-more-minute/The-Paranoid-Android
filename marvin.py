@@ -21,11 +21,10 @@ r = praw.Reddit(user_agent=desc, site_name='marvin')
 db_filename = 'marvin.db'
 if not os.path.isfile(db_filename):
     file(db_filename, 'w').close()
-    con = lite.connect(db_filename)
-    con.execute('create table comments (Id TEXT);')
-    print "db created"
-else:
-    con = lite.connect(db_filename)
+    with  lite.connect(db_filename) as con:
+	con = lite.connect(db_filename)
+	con.execute('create table comments (Id TEXT);')
+	print "db created"
 
 def scp_url(num):
     return "http://www.scp-wiki.net/scp-" + num
@@ -133,18 +132,16 @@ def shame():
 		comment.delete()
 
 def already_replied(comment):
-    con = lite.connect(db_filename)
-    query_string = "select * from comments where Id = ?"
-    ret = con.execute(query_string, (comment,)).fetchone() != None
-    con.close()
-    return ret
+    with lite.connect(db_filename) as con:
+	query_string = "select * from comments where Id = ?"
+	ret = con.execute(query_string, (comment,)).fetchone() != None
+	return ret
 
 def add_to_db(comment):
-    con = lite.connect(db_filename)
-    query_string = "insert into comments (Id) values (?)"
-    con.execute(query_string, (comment,))
-    con.commit()
-    con.close()
+    with lite.connect(db_filename) as con:
+	query_string = "insert into comments (Id) values (?)"
+	con.execute(query_string, (comment,))
+	con.commit()
 
 def job_satisfaction():
     for comment in r.inbox.unread():
@@ -176,5 +173,4 @@ if __name__ == "__main__":
 	try:
 	    watch_comments()
 	except Exception, e:
-	    con.close()
 	    print e
