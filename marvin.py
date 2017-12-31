@@ -14,7 +14,7 @@ else:
         comments_replied_to = f.read().splitlines()
         comments_replied_to = filter(None, comments_replied_to)
 
-desc = "/r/scp helper upgrade"
+desc = "/r/scp helper by one_more_minute"
 
 r = praw.Reddit(user_agent=desc, site_name='marvin')
 print("Logged in as: " + str(r.user.me()))
@@ -97,12 +97,11 @@ def get_quote():
 
 if __name__ == "__main__":
     while True:
-#	sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
-        sub = r.subreddit('sandboxtest')
+        sub = r.subreddit('scp+InteractiveFoundation+SCP_Game+sandboxtest+SCP682+DankMemesfromSite19')
         sleep(5)
         print "*pulse*"
         try:
-            for rpost in sub.hot(limit=2):
+            for rpost in sub.hot(limit=20):
                 rpost.comments.replace_more(limit=2)
                 for comment in rpost.comments.list():
                     if comment.id not in comments_replied_to:                        
@@ -117,7 +116,6 @@ if __name__ == "__main__":
                             print "Comment posted by " + str(comment.author)                            
                             print "Replying with: "
                             print '"' + reply + '"'
-                            print
                             try:
                                 comment.reply(reply)
 #                                comment.upvote() #this may be illegal under reddit TOS
