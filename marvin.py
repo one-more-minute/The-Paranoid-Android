@@ -120,7 +120,7 @@ if __name__ == "__main__":
             loop_count = 0
             spider.update_scip_title_list()
             scips = spider.scips
-	sub = r.subreddit('scp+InteractiveFoundation+SCP_Game+sandboxtest+SCP682+DankMemesFromSite19)
+        sub = r.subreddit('scp+InteractiveFoundation+SCP_Game+sandboxtest+SCP682+DankMemesFromSite19')
 #        sub = r.subreddit('sandboxtest')
         sleep(5)
         print ".",
