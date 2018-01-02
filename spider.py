@@ -33,7 +33,7 @@ def update_scip_title_list():
     scips = []
     global titles
     try:
-        print "\nUpdating SCP title List"
+        print "Updating SCP title List"
         for p in pages:
             scrape_wiki_page(p)
         titles = True
@@ -87,4 +87,4 @@ def has_results(tale):
         astr = "".join(astr)
         return '[' + astr + '](' + alink + ')'
     except Exception, e:
-        return '"' + tale.lstrip() + '" - No Results'
+        return "No Results"
