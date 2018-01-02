@@ -21,8 +21,7 @@ print("Logged in as: " + str(r.user.me()))
 
 
 # Get authorisation
-# r.get_authorize_url('foo', 'submit read vote', True)
-# r.get_access_information(access_token)
+# print(r.auth.url('foo', 'submit read vote', True))
 
 def scp_url(num):
     return "http://www.scp-wiki.net/scp-" + num
@@ -45,15 +44,15 @@ def remove_links(s):
     return s
 
 def get_nums(s):
-#    return re.findall(r"""(?i)(?x)                 # Ignore case, comment mode
-#                          (?<! \d| \,          )   # Not preceded by a digit
-#                          (?<! `               )   # Not preceded by `
-#                          \d+                      # The number
-#                          (?: - [a-zA-Z0-9-]*  )?  # Optional extensions
-#                          (?! ` | %            )   # Not followed by a special chars
-#                          (?! \.\d | \d | \,\d )   # Not followed by a decimal point or digit
-#                          """, remove_links(s))
-	return re.findall(r"(?i)(?<!\d-)(?<!/|\\|,|\.|'|\#|\$)(?<!\d)\d+(?!\d)(?!/|\\|`|\.|,|%)", remove_links(s)) #improved (probably) regex
+    return re.findall(r"""(?i)(?x)                 # Ignore case, comment mode
+                          (?<! \d| \,          )   # Not preceded by a digit
+                          (?<! `               )   # Not preceded by `
+                          \d+                      # The number
+                          (?: - [a-zA-Z0-9-]*  )?  # Optional extensions
+                          (?! ` | %            )   # Not followed by a special chars
+                          (?! \.\d | \d | \,\d )   # Not followed by a decimal point or digit
+                          """, remove_links(s))
+#	return re.findall(r"(?i)(?<!\d-)(?<!/|\\|,|\.|'|\#|\$)(?<!\d)\d+(?!\d)(?!/|\\|`|\.|,|%)", remove_links(s)) #improved (probably) regex
 
 def get_links(s):
     nums = []
