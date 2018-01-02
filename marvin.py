@@ -18,7 +18,7 @@ desc = "/r/scp helper by one_more_minute"
 
 r = praw.Reddit(user_agent=desc, site_name='marvin')
 print("Logged in as: " + str(r.user.me()))
-print("Waiting for user comments")
+
 
 # Get authorisation
 # r.get_authorize_url('foo', 'submit read vote', True)
@@ -96,6 +96,7 @@ def get_quote():
         return quote
 
 if __name__ == "__main__":
+    print("Waiting for user comments")
     while True:
         sub = r.subreddit('scp+InteractiveFoundation+SCP_Game+sandboxtest+SCP682+DankMemesfromSite19')
         sleep(5)
