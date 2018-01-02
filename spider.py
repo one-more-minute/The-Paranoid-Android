@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
+import re
+from time import time, sleep
 import codecs
 import urllib2
+import os
 
 regex = re.compile("(?<=SCP-)\d+")
 scips = []
