@@ -132,12 +132,12 @@ if __name__ == "__main__":
                         links = search_wiki(comment.body)
                         if len(links) > 0:
                             comment.refresh() #Not certain if this is needed anymore
-                            reply = ", ".join(links) + "."
+                            reply = "* " + "\n* ".join(links)
                             if len(links) > 10:
                                 reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."                                
                             elif random.random() < 1/50.:
                                 reply += "\n\n" + get_quote()
-                            print "Comment posted by " + str(comment.author)
+                            print "\nComment posted by " + str(comment.author)
                             print "Replying with: "
                             print '"' + reply + '"'
                             try:
