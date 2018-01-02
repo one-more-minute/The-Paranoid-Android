@@ -16,11 +16,11 @@ else:
         comments_replied_to = f.read().splitlines()
         comments_replied_to = filter(None, comments_replied_to)
 
-desc = "/r/scp helper by one_more_minute"
+desc = "/r/scp helper upgrade"
 
-r = praw.Reddit(user_agent=desc, site_name='marvin')
+#r = praw.Reddit(user_agent=desc, site_name='marvin')
+r = praw.Reddit(client_id='GnpNoOznNQDPSw', client_secret='sdKSn7X-8Uw0AQYnod8llzdMYTE', user_agent=desc, username='I_stab_you', password='zakiabano456')
 print("Logged in as: " + str(r.user.me()))
-
 
 # Get authorisation
 # print(r.auth.url('foo', 'submit read vote', True))
@@ -46,6 +46,7 @@ def remove_links(s):
     return s
 
 def get_nums(s):
+    #return re.findall(r"(?i)(?<!\d-)(?<!/|\\|,|\.|'|\#|\$)(?<!\d)(?!\d\,\d)\d+(?!\d)(?!/|\\|`|\.|%)(?!\d\,\d)", remove_links(s)) #improved (probably) regex
     return re.findall(r"""(?i)(?x)                 # Ignore case, comment mode
                           (?<! \d| \,          )   # Not preceded by a digit
                           (?<! `               )   # Not preceded by `
@@ -54,13 +55,12 @@ def get_nums(s):
                           (?! ` | %            )   # Not followed by a special chars
                           (?! \.\d | \d | \,\d )   # Not followed by a decimal point or digit
                           """, remove_links(s))
-#	return re.findall(r"(?i)(?<!\d-)(?<!/|\\|,|\.|'|\#|\$)(?<!\d)\d+(?!\d)(?!/|\\|`|\.|,|%)", remove_links(s)) #improved (probably) regex
 
 def get_requests(s):
     return re.findall(r"(?i)(?<=Marvin Please Search).*|(?<=\\s).*", s)
 
 def get_scps(s):
-    nums = []
+    nums = []    
     for num in get_nums(s):
         num not in nums and nums.append(num)
     nums = filter(scp_exists, nums)
@@ -110,34 +110,34 @@ def get_quote():
         return quote
 
 if __name__ == "__main__":
-    spider.update_scip_title_list()    #updates list of scips on first run
+    spider.update_scip_title_list()
     scips = spider.scips
     loop_count = 0
-    print("Waiting for user comments")
+    print("Waiting for user comments...")
     while True:
         loop_count += 1
         if loop_count >= 720:
             loop_count = 0
             spider.update_scip_title_list()
             scips = spider.scips
-        sub = r.subreddit('scp+InteractiveFoundation+SCP_Game+sandboxtest+SCP682+DankMemesFromSite19')
-#        sub = r.subreddit('sandboxtest')
+#	sub = r.subreddit('scp+InteractiveFoundation+SCP_Game+sandboxtest+SCP682+DankMemesFromSite19)
+        sub = r.subreddit('sandboxtest')
         sleep(5)
         print ".",
         try:
-            for rpost in sub.hot(limit=20):
+            for rpost in sub.hot(limit=2):
                 rpost.comments.replace_more(limit=2)
                 for comment in rpost.comments.list():
                     if comment.id not in comments_replied_to and comment.created_utc > (time() - 600):
                         links = search_wiki(comment.body)
                         if len(links) > 0:
                             comment.refresh() #Not certain if this is needed anymore
-                            reply = ", ".join(links) + "."
+                            reply = "* " + "\n* ".join(links)
                             if len(links) > 10:
                                 reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."                                
                             elif random.random() < 1/50.:
                                 reply += "\n\n" + get_quote()
-                            print "Comment posted by " + str(comment.author)
+                            print "\nComment posted by " + str(comment.author)
                             print "Replying with: "
                             print '"' + reply + '"'
                             try:
@@ -152,3 +152,25 @@ if __name__ == "__main__":
                                 print e
         except Exception, e:
             print e
+                
+#            for comment in r.get_comments(sub, limit=100):
+#                links = get_scps(comment.body)
+#                if len(links) > 0 and comment.created_utc > (time() - 60):
+#                    comment.refresh()
+#                    if "The-Paranoid-Android" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
+#                        continue
+#                    reply = ", ".join(links) + "."
+#                    if len(links) > 10:
+#                        reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
+#                    elif random.random() < 1/50.:
+#                        reply += "\n\n" + get_quote()
+#                    print reply
+#                    print
+#                    try:
+#                        comment.reply(reply)
+#                        comment.upvote()
+#                    except Exception, e:
+#                        print 'respond error:'
+#                        print e
+#        except Exception, e:
+#            print e
