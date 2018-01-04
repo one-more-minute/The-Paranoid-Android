@@ -4,6 +4,7 @@ from time import time, sleep
 import codecs
 import urllib2
 import os
+import time, threading
 
 regex = re.compile("(?<=SCP-)\d+")
 scips = []
@@ -58,7 +59,8 @@ def update_scip_title_list():
         else:
             titles = False
             print "No Backup found, SCP titles functionality disabled"
-
+    threading.Timer(7200, foo).start()
+            
 def scp_title(num):
     if titles:
         s = filter(lambda scip: scip[0].find("SCP-" + str(num)) >= 0, scips)
