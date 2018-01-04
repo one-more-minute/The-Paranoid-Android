@@ -4,25 +4,34 @@ import requests
 from time import time, sleep
 import random
 import sys
+import os
+import unicodedata
+import spider
+
+if not os.path.isfile("comments_replied_to.txt"):
+    open("comments_replied_to.txt", "w").close()
+    comments_replied_to = []
+else:
+    with open("comments_replied_to.txt", "r") as f:
+        comments_replied_to = f.read().splitlines()
+        comments_replied_to = filter(None, comments_replied_to)
 
 desc = "/r/scp helper by one_more_minute"
 
 r = praw.Reddit(user_agent=desc, site_name='marvin')
+print("Logged in as: " + str(r.user.me()))
 
-r.refresh_access_information()
 
 # Get authorisation
-# r.get_authorize_url('foo', 'submit read vote', True)
-# r.get_access_information(access_token)
+# print(r.auth.url('foo', 'submit read vote', True))
 
 def scp_url(num):
     return "http://www.scp-wiki.net/scp-" + num
 
 def scp_link(num):
-    return "[SCP-" + num + "](" + scp_url(num) + ")"
+    return "[SCP-" + num + "](" + scp_url(num) + ")" + spider.scp_title(num)
 
 existing = set()
-
 def scp_exists(num):
     if num in existing or requests.get(scp_url(num)).status_code == 200:
         existing.add(num)
@@ -31,9 +40,9 @@ def scp_exists(num):
         return False
 
 def remove_links(s):
-    s = re.sub(r"\[[^\]]*\] *\([^\)]*\)", "", s)
-    s = re.sub(r"(?:http|https)://[^ ]*", "", s)
-    s = re.sub(r"(?i)110[- ]Montauk", "", s)
+    s = re.sub(r"\[[^\]]*\] *\([^\)]*\)", "", s) 	#Removes brackets [] and ()
+    s = re.sub(r"(?:http|https)://[^ ]*", "", s) 	#Removes 'http', 'https' and blank space characters
+    s = re.sub(r"(?i)110[- ]Montauk", "", s) 		#Removes '110 Montauk', probably because it gets annoying
     return s
 
 def get_nums(s):
@@ -45,8 +54,12 @@ def get_nums(s):
                           (?! ` | %            )   # Not followed by a special chars
                           (?! \.\d | \d | \,\d )   # Not followed by a decimal point or digit
                           """, remove_links(s))
+#	return re.findall(r"(?i)(?<!\d-)(?<!/|\\|,|\.|'|\#|\$)(?<!\d)\d+(?!\d)(?!/|\\|`|\.|,|%)", remove_links(s)) #improved (probably) regex
 
-def get_links(s):
+def get_requests(s):
+    return re.findall(r"(?i)(?<=Marvin Please Search).*|(?<=\\s).*", s)
+
+def get_scps(s):
     nums = []
     for num in get_nums(s):
         num not in nums and nums.append(num)
@@ -54,10 +67,19 @@ def get_links(s):
     nums = map(scp_link, nums)
     return nums
 
+def search_wiki(s):
+    requests = []
+    for sreq in get_requests(s):
+        sreq not in requests and requests.append(sreq)
+        s = s.replace(sreq, "") 
+    requests = map(spider.has_results, requests)
+    requests = filter(None, requests)
+    requests += get_scps(s)
+    return requests
+
 def chess():
     games = str(int(time()/1000)*42)
-    return "Nothing left to do except play chess against myself.\n\n" + \
-           games + " games so far, " + games + " draws."
+    return "Nothing left to do except play chess against myself.\n\n" + games + " games so far, " + games + " draws."
 
 quotes = [
     "I think you ought to know I'm feeling very depressed.",
@@ -88,28 +110,45 @@ def get_quote():
         return quote
 
 if __name__ == "__main__":
+    spider.update_scip_title_list()    #updates list of scips on first run
+    scips = spider.scips
+    loop_count = 0
+    print("Waiting for user comments")
     while True:
-	sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682'])
-	sleep(1)
-	try:
-	    for comment in r.get_comments(sub, limit=100):
-		links = get_links(comment.body)
-		if len(links) > 0 and comment.created_utc > (time() - 60):
-		    comment.refresh()
-		    if "The-Paranoid-Android" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
-			continue
-		    reply = ", ".join(links) + "."
-		    if len(links) > 10:
-			reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
-		    elif random.random() < 1/50.:
-			reply += "\n\n" + get_quote()
-		    print reply
-		    print
-		    try:
-			comment.reply(reply)
-			comment.upvote()
-		    except Exception, e:
-			print 'respond error:'
-			print e
-	except Exception, e:
-	    print e
+        loop_count += 1
+        if loop_count >= 720:
+            loop_count = 0
+            spider.update_scip_title_list()
+            scips = spider.scips
+        sub = r.subreddit('scp+InteractiveFoundation+SCP_Game+sandboxtest+SCP682+DankMemesFromSite19')
+#        sub = r.subreddit('sandboxtest')
+        sleep(5)
+        print ".",
+        try:
+            for rpost in sub.hot(limit=20):
+                rpost.comments.replace_more(limit=2)
+                for comment in rpost.comments.list():
+                    if comment.id not in comments_replied_to and comment.created_utc > (time() - 600):
+                        links = search_wiki(comment.body)
+                        if len(links) > 0:
+                            comment.refresh() #Not certain if this is needed anymore
+                            reply = "* " + "\n* ".join(links)
+                            if len(links) > 10:
+                                reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."                                
+                            elif random.random() < 1/50.:
+                                reply += "\n\n" + get_quote()
+                            print "\nComment posted by " + str(comment.author)
+                            print "Replying with: "
+                            print '"' + reply + '"'
+                            try:
+                                comment.reply(reply)
+#                                comment.upvote() #this may be illegal under reddit TOS
+                                comments_replied_to.append(comment.id)
+                                with open("comments_replied_to.txt", "a") as f:
+                                    f.write(comment.id + "\n")
+                                sleep(1)
+                            except Exception, e:
+                                print 'respond error:'
+                                print e
+        except Exception, e:
+            print e
