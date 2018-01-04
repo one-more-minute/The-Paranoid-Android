@@ -5,10 +5,20 @@ from time import time, sleep
 import random
 import sys
 import configparser
+import os
 
 config = configparser.ConfigParser()
 config.read('praw.ini')
 config = config['marvin']
+
+#Comments replied to file, so the username doesn't matter
+if not os.path.isfile("comments_replied_to.txt"): 
+	open("comments_replied_to.txt", "w").close()
+	comments_replied_to = []
+else:
+	with open("comments_replied_to.txt", "r") as f:
+		comments_replied_to = f.read().splitlines()
+		comments_replied_to = filter(None, comments_replied_to)
 
 desc = "/r/scp helper by one_more_minute"
 
@@ -98,25 +108,26 @@ if __name__ == "__main__":
 		sleep(10)
 		try:
 			for comment in r.subreddit(sub).stream.comments():
-				links = get_links(comment.body)
-				if len(links) > 0 and comment.created_utc > (time() - 60):
-					comment.refresh()
-					if "The-Paranoid-Android" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
-						continue
-					if "MicroArchitecture" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
-						continue
-					reply = ", ".join(links) + "."
-					if len(links) > 10:
-						reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
-					elif random.random() < 1/50.:
-						reply += "\n\n" + get_quote()
-					print(reply)
-					print()
-					try:
-						comment.reply(reply)
-						comment.upvote()
-					except Exception as e:
-						print('respond error:')
-						print(e)
+				if comment.id not in comments_replied_to and comment.created_utc > (time() - 60): #Reduces server workload (as get_links is not called for every comment) 
+					links = get_links(comment.body)
+					if len(links) > 0:
+						comment.refresh()
+						reply = ", ".join(links) + "."
+						if len(links) > 10:
+							reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
+						elif random.random() < 1/50.:
+							reply += "\n\n" + get_quote()
+						print(reply)
+						print()
+						try:
+							comment.reply(reply)
+							comment.upvote()
+							comments_replied_to.append(comment.id)
+							with open("comments_replied_to.txt", "a") as f:
+								f.write(comment.id + "\n")
+							sleep(1)
+						except Exception as e:
+							print('respond error:')
+							print(e)
 		except Exception as e:
 			print(e)
