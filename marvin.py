@@ -121,14 +121,13 @@ def get_quote():
 if __name__ == "__main__":
 	spider.update_scip_title_list() 	#updates list of Scips on first run
 	scips = spider.scips			#list of scips and their titles
-	loop_count = 0
+	
 	print("Waiting for user comments...")
 	while True:
-		loop_count += 1
-		if loop_count >= 720:		#simple function to refresh list of scips after a period of itme (approx 2 hours, depending on loop delay)
-			loop_count = 0
-			spider.update_scip_title_list()
-			scips = spider.scips
+		
+			
+			
+		
 		sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682', 'DankMemesFromSite19'])
 		sleep(10)
 		print ".", #prints a . every loop so as to give an indication that it's running
