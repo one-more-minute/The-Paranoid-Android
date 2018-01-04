@@ -6,6 +6,8 @@ import random
 import sys
 import configparser
 import os
+import unicodedata
+import spider
 
 config = configparser.ConfigParser()
 config.read('praw.ini')
@@ -24,7 +26,7 @@ desc = "/r/scp helper by one_more_minute"
 
 r = praw.Reddit(user_agent=desc, client_id=config['client_id'], client_secret=config['secret'], username=config['user'], password=config['pass'])
 
-print(r.user.me())
+print("Logged in as: " + str(r.user.me()))
 
 # Get authorisation
 # r.get_authorize_url('foo', 'submit read vote', True)
@@ -34,7 +36,7 @@ def scp_url(num):
 	return "http://www.scp-wiki.net/scp-" + num
 
 def scp_link(num):
-	return "[SCP-" + num + "](" + scp_url(num) + ")"
+	return "[SCP-" + num + "](" + scp_url(num) + ")" + spider.scp_title(num)
 
 existing = set()
 
@@ -103,7 +105,15 @@ def get_quote():
 		return quote
 
 if __name__ == "__main__":
+	spider.update_scip_title_list() 	#updates list of Scips on first run
+	scips = spider.scips			#list of scips and their titles
+	loop_count = 0 			
 	while True:
+		loop_count += 1
+		if loop_count >= 720:		#simple function to refresh list of scips after a period of itme (approx 2 hours, depending on loop delay)
+			loop_count = 0
+			spider.update_scip_title_list()
+			scips = spider.scips
 		sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682', 'DankMemesFromSite19'])
 		sleep(10)
 		try:
