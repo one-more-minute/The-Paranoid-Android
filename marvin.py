@@ -124,16 +124,11 @@ if __name__ == "__main__":
 	
 	print("Waiting for user comments...")
 	while True:
-		
-			
-			
-		
 		sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682', 'DankMemesFromSite19'])
-		sleep(10)
-		print ".", #prints a . every loop so as to give an indication that it's running
+		sleep(10)		
 		try:
 			for comment in r.subreddit(sub).stream.comments():
-				if comment.id not in comments_replied_to and comment.created_utc > (time() - 60): #Reduces server workload (as get_scps is not called for every comment) 
+				if comment.id not in comments_replied_to and comment.created_utc > (time() - 6000): #Reduces server workload (as get_scps is not called for every comment)
 					links = search_wiki(comment.body)		#First priority is given to explicitly called for searches, then for interpreted numbers
 					if len(links) > 0:
 						comment.refresh()

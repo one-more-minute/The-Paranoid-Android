@@ -59,7 +59,7 @@ def update_scip_title_list():
         else:
             titles = False
             print "No Backup found, SCP titles functionality disabled"
-    threading.Timer(7200, foo).start()
+    threading.Timer(7200, update_scip_title_list).start()
             
 def scp_title(num):
     if titles:
