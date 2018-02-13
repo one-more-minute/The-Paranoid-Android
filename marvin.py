@@ -5,16 +5,28 @@ from time import time, sleep
 import random
 import sys
 import configparser
+import os
+import unicodedata
+import spider
 
 config = configparser.ConfigParser()
 config.read('praw.ini')
 config = config['marvin']
 
+#Comments replied to file, so the username doesn't matter
+if not os.path.isfile("comments_replied_to.txt"):
+	open("comments_replied_to.txt", "w").close()
+	comments_replied_to = []
+else:
+	with open("comments_replied_to.txt", "r") as f:
+		comments_replied_to = f.read().splitlines()
+		comments_replied_to = filter(None, comments_replied_to)
+
 desc = "/r/scp helper by one_more_minute"
 
 r = praw.Reddit(user_agent=desc, client_id=config['client_id'], client_secret=config['secret'], username=config['user'], password=config['pass'])
 
-print(r.user.me())
+print("Logged in as: " + str(r.user.me()))
 
 # Get authorisation
 # r.get_authorize_url('foo', 'submit read vote', True)
@@ -24,7 +36,7 @@ def scp_url(num):
 	return "http://www.scp-wiki.net/scp-" + num
 
 def scp_link(num):
-	return "[SCP-" + num + "](" + scp_url(num) + ")"
+	return "[SCP-" + num + "](" + scp_url(num) + ")" + spider.scp_title(num)
 
 existing = set()
 
@@ -51,13 +63,27 @@ def get_nums(s):
 						  (?! \.\d | \d | \,\d )   # Not followed by a decimal point or digit
 						  """, remove_links(s))
 
-def get_links(s):
+def get_requests(s):
+	return re.findall(r"(?i)(?<=Marvin)|((?<=find).*|(?<=get me).*|(?<=search).*)|(?<=\!s).*", s)
+
+def get_scps(s):
 	nums = []
 	for num in get_nums(s):
 		num not in nums and nums.append(num)
 	nums = filter(scp_exists, nums)
 	nums = list(map(scp_link, nums))
 	return nums
+
+def search_wiki(s):
+	requests = []
+	for sreq in get_requests(s):
+		if sreq:
+			sreq not in requests and requests.append(sreq)
+			s = s.replace(sreq, "")
+	requests = map(spider.has_results, requests)
+	requests = filter(None, requests)
+	requests += get_scps(s)
+	return requests
 
 def chess():
 	games = str(int(time()/1000)*42)
@@ -93,30 +119,36 @@ def get_quote():
 		return quote
 
 if __name__ == "__main__":
+	spider.update_scip_title_list() 	#updates list of Scips on first run
+	global scips
+	scips = spider.scips			#list of scips and their titles
+	print("Waiting for user comments...")
 	while True:
 		sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682', 'DankMemesFromSite19'])
 		sleep(10)
 		try:
 			for comment in r.subreddit(sub).stream.comments():
-				links = get_links(comment.body)
-				if len(links) > 0 and comment.created_utc > (time() - 60):
-					comment.refresh()
-					if "The-Paranoid-Android" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
-						continue
-					if "MicroArchitecture" in map(lambda x: x.author.name if x.author else "[deleted]", comment.replies):
-						continue
-					reply = ", ".join(links) + "."
-					if len(links) > 10:
-						reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
-					elif random.random() < 1/50.:
-						reply += "\n\n" + get_quote()
-					print(reply)
-					print()
-					try:
-						comment.reply(reply)
-						comment.upvote()
-					except Exception as e:
-						print('respond error:')
-						print(e)
+				if comment.id not in comments_replied_to and comment.created_utc > (time() - 60): #Reduces server workload (as get_scps is not called for every comment)
+					links = search_wiki(comment.body)		#First priority is given to explicitly called for searches, then for interpreted numbers
+					if len(links) > 0:
+						comment.refresh()
+						reply = "* " + "\n* ".join(links)	#Arranges links in a reddit comment list, rather than just seperating by commas, makes for prettier comments
+						if len(links) > 10:
+							reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
+						elif random.random() < 1/50.:
+							reply += "\n\n" + get_quote()
+						print("\nComment posted by " + str(comment.author))
+						print("Replying with: ")
+						print('"' + reply + '"')
+						try:
+							comment.reply(reply)
+							#comment.upvote()		#I think this is illegal under reddit's TOS, tread carefully
+							comments_replied_to.append(comment.id)
+							with open("comments_replied_to.txt", "a") as f:
+								f.write(comment.id + "\n")
+							sleep(1)
+						except Exception as e:
+							print('respond error:')
+							print(e)
 		except Exception as e:
 			print(e)
