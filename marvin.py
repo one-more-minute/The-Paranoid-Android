@@ -14,7 +14,7 @@ config.read('praw.ini')
 config = config['marvin']
 
 #Comments replied to file, so the username doesn't matter
-if not os.path.isfile("comments_replied_to.txt"): 
+if not os.path.isfile("comments_replied_to.txt"):
 	open("comments_replied_to.txt", "w").close()
 	comments_replied_to = []
 else:
@@ -79,7 +79,7 @@ def search_wiki(s):
 	for sreq in get_requests(s):
 		if sreq:
 			sreq not in requests and requests.append(sreq)
-			s = s.replace(sreq, "") 
+			s = s.replace(sreq, "")
 	requests = map(spider.has_results, requests)
 	requests = filter(None, requests)
 	requests += get_scps(s)
@@ -120,12 +120,12 @@ def get_quote():
 
 if __name__ == "__main__":
 	spider.update_scip_title_list() 	#updates list of Scips on first run
-	global scips = spider.scips			#list of scips and their titles
-	
+	global scips
+	scips = spider.scips			#list of scips and their titles
 	print("Waiting for user comments...")
 	while True:
 		sub = '+'.join(['scp', 'InteractiveFoundation', 'SCP_Game', 'sandboxtest', 'SCP682', 'DankMemesFromSite19'])
-		sleep(10)		
+		sleep(10)
 		try:
 			for comment in r.subreddit(sub).stream.comments():
 				if comment.id not in comments_replied_to and comment.created_utc > (time() - 60): #Reduces server workload (as get_scps is not called for every comment)
@@ -137,9 +137,9 @@ if __name__ == "__main__":
 							reply += "\n\nYou're not even going to click on all of those, are you? Brain the size of a planet, and this is what they've got me doing..."
 						elif random.random() < 1/50.:
 							reply += "\n\n" + get_quote()
-						print "\nComment posted by " + str(comment.author)
-						print "Replying with: "
-						print '"' + reply + '"'
+						print("\nComment posted by " + str(comment.author))
+						print("Replying with: ")
+						print('"' + reply + '"')
 						try:
 							comment.reply(reply)
 							#comment.upvote()		#I think this is illegal under reddit's TOS, tread carefully

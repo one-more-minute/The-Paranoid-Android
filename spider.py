@@ -14,12 +14,12 @@ def isSCP(i):
     if i.contents[0].name == 'a':
         try:
             return regex.search(i.contents[0].string)
-        except Exception, e:
+        except Exception as e:
             return False
     else:
         return False
 
-def scrape_wiki_page(address):    
+def scrape_wiki_page(address):
     html = urllib2.urlopen(address)
     soup = BeautifulSoup(html, 'html.parser')
     li = soup.find_all('li')
@@ -34,33 +34,33 @@ def update_scip_title_list():
     scips = []
     global titles
     try:
-        print "\nUpdating SCP title List"
+        print("\nUpdating SCP title List")
         for p in pages:
             scrape_wiki_page(p)
         titles = True
-        print "Completed succesfully! Using titles"
+        print("Completed succesfully! Using titles")
         f = codecs.open('sciplist.txt', encoding='utf-8', mode='w')
         for l in scips:
             f.write(l[0] + u"|" + l[1] + u"\r\n")
         f.close()
-    except Exception, e:
-        print 'Unable to scrape wiki for SCP titles - Error: '
-        print e
-        print 'Trying to recover from backup...'
+    except Exception as e:
+        print('Unable to scrape wiki for SCP titles - Error: ')
+        print(e)
+        print('Trying to recover from backup...')
         if os.path.isfile('sciplist.txt'):
             try:
                 f = codecs.open('sciplist.txt', encoding='utf-8', mode='r')
                 tlines = f.read().splitlines()
                 scips = map(lambda a: a.split('|'), tlines)
-                print "Successfully reloaded old SCP title List"
-            except Exception, e:
+                print("Successfully reloaded old SCP title List")
+            except Exception as e:
                 titles = False
-                print "Unable to load from Backup, SCP titles functionality disabled"
+                print("Unable to load from Backup, SCP titles functionality disabled")
         else:
             titles = False
-            print "No Backup found, SCP titles functionality disabled"
+            print("No Backup found, SCP titles functionality disabled")
     threading.Timer(7200, update_scip_title_list).start()
-            
+
 def scp_title(num):
     if titles:
         s = filter(lambda scip: scip[0].find("SCP-" + str(num)) >= 0, scips)
@@ -68,12 +68,12 @@ def scp_title(num):
             return " - *'" + s[0][1].encode('ascii','ignore') + "'*"
         else:
             return ""
-    else:        
+    else:
         return ""
 
 def has_results(tale):
     address = "http://scp-wiki.wikidot.com/search:site/a/p/q/" + tale.lstrip()
-    address = r"%20".join(address.split(" "))    
+    address = r"%20".join(address.split(" "))
     try:
         html = urllib2.urlopen(address)
         soup = BeautifulSoup(html, 'html.parser')
@@ -88,5 +88,5 @@ def has_results(tale):
             astr.append(tag.string)
         astr = "".join(astr)
         return '[' + astr + '](' + alink + ')'
-    except Exception, e:
+    except Exception as e:
         return '"' + tale.lstrip() + '" - No Results'
